@@ -22,10 +22,10 @@ git clone https://github.com/run-llama/openai_realtime_client.git
 cd openai_realtime_client
 ```
 
-Set your openai key:
+Set your OpenAI key by creating a `.env` file in the project root:
 
 ```bash
-export OPENAI_API_KEY="sk-..."
+echo "OPENAI_API_KEY=sk-..." > .env
 ```
 
 ## Usage

@@ -1,5 +1,6 @@
 import asyncio
 import os
+from dotenv import load_dotenv
 
 from pynput import keyboard
 from openai_realtime_client import RealtimeClient, AudioHandler, InputHandler, TurnDetectionMode
@@ -19,6 +20,7 @@ def get_phone_number(name: str) -> str:
 tools = [FunctionTool.from_defaults(fn=get_phone_number)]
 
 async def main():
+    load_dotenv()
     audio_handler = AudioHandler()
     input_handler = InputHandler()
     input_handler.loop = asyncio.get_running_loop()
