@@ -27,6 +27,7 @@ async def main():
     
     client = RealtimeClient(
         api_key=os.environ.get("OPENAI_API_KEY"),
+        model=os.environ.get("OPENAI_MODEL"),
         on_text_delta=lambda text: print(f"\nAssistant: {text}", end="", flush=True),
         on_audio_delta=lambda audio: audio_handler.play_audio(audio),
         on_interrupt=lambda: audio_handler.stop_playback_immediately(),

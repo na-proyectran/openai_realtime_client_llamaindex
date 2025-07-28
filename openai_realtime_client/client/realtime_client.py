@@ -1,3 +1,4 @@
+import os
 import asyncio
 import websockets
 import json
@@ -58,7 +59,9 @@ class RealtimeClient:
     def __init__(
         self, 
         api_key: str,
-        model: str = "gpt-4o-realtime-preview-2024-10-01",
+        model: str = os.environ.get(
+            "OPENAI_MODEL", "gpt-4o-mini-realtime-preview-2024-12-17"
+        ),
         voice: str = "alloy",
         instructions: str = "You are a helpful assistant",
         temperature: float = 0.8,
