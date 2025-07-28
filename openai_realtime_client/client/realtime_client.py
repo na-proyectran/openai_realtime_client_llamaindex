@@ -66,6 +66,7 @@ class RealtimeClient:
         voice: str = "alloy",
         instructions: str = "You are a helpful assistant",
         temperature: float = 0.8,
+        language: str = "en",
         turn_detection_mode: TurnDetectionMode = TurnDetectionMode.MANUAL,
         tools: Optional[List[BaseTool]] = None,
         on_text_delta: Optional[Callable[[str], None]] = None,
@@ -86,6 +87,7 @@ class RealtimeClient:
         self.on_output_transcript = on_output_transcript
         self.instructions = instructions
         self.temperature = temperature
+        self.language = language
         self.base_url = "wss://api.openai.com/v1/realtime"
         self.extra_event_handlers = extra_event_handlers or {}
         self.turn_detection_mode = turn_detection_mode
@@ -134,7 +136,8 @@ class RealtimeClient:
                 },
                 "output_audio_format": "pcm16",
                 "input_audio_transcription": {
-                    "model": "whisper-1"
+                    "model": "gpt-4o-mini-transcribe",
+                    "language": self.language,
                 },
                 "tools": tools,
                 "tool_choice": "auto",
@@ -151,7 +154,8 @@ class RealtimeClient:
                 },
                 "output_audio_format": "pcm16",
                 "input_audio_transcription": {
-                    "model": "whisper-1"
+                    "model": "gpt-4o-mini-transcribe",
+                    "language": self.language,
                 },
                 "turn_detection": {
                     "type": "server_vad",
@@ -176,7 +180,8 @@ class RealtimeClient:
                 },
                 "output_audio_format": "pcm16",
                 "input_audio_transcription": {
-                    "model": "whisper-1"
+                    "model": "gpt-4o-mini-transcribe",
+                    "language": self.language,
                 },
                 "turn_detection": {
                     "type": "semantic_vad",

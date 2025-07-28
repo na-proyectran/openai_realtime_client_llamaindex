@@ -30,8 +30,11 @@ async def main():
         model=os.environ.get("OPENAI_MODEL"),
         on_text_delta=lambda text: print(f"\nAssistant: {text}", end="", flush=True),
         on_audio_delta=lambda audio: audio_handler.play_audio(audio),
+        on_input_transcript=lambda transcript: print(f"\nYou said: {transcript}\nAssistant: ", end="", flush=True),
+        on_output_transcript=lambda transcript: print(f"{transcript}", end="", flush=True),
         on_interrupt=lambda: audio_handler.stop_playback_immediately(),
         turn_detection_mode=TurnDetectionMode.SEMANTIC_VAD,
+        language="es",
         tools=tools,
     )
 
