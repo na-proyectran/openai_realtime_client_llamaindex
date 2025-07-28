@@ -7,14 +7,15 @@ license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10"
-llama-index-core = "^0.11.17"
+python = "^3.13"
+llama-index-core = "0.12.52"
 pyaudio = "^0.2.14"
-pynput = "^1.7.7"
+audioop-lts = { version = "...", python = "^3.13" }
+pynput = "^1.8.1"
 pydub = "^0.25.1"
 websockets = "^13.1"
 wave = "^0.0.2"
-python-dotenv = "^1.0"
+python-dotenv = "^1.1.1"
 
 [build-system]
 requires = ["poetry-core"]
