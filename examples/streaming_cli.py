@@ -31,7 +31,7 @@ async def main():
         on_text_delta=lambda text: print(f"\nAssistant: {text}", end="", flush=True),
         on_audio_delta=lambda audio: audio_handler.play_audio(audio),
         on_interrupt=lambda: audio_handler.stop_playback_immediately(),
-        turn_detection_mode=TurnDetectionMode.SERVER_VAD,
+        turn_detection_mode=TurnDetectionMode.SEMANTIC_VAD,
         tools=tools,
     )
 

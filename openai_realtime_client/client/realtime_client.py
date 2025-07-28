@@ -14,6 +14,7 @@ from llama_index.core.tools import BaseTool, AsyncBaseTool, ToolSelection, adapt
 
 class TurnDetectionMode(Enum):
     SERVER_VAD = "server_vad"
+    SEMANTIC_VAD = "server_vad"
     MANUAL = "manual"
 
 class RealtimeClient:
@@ -121,13 +122,16 @@ class RealtimeClient:
         for t in tools:
             t['type'] = 'function'  # TODO: OpenAI docs didn't say this was needed, but it was
 
-        
+
         if self.turn_detection_mode == TurnDetectionMode.MANUAL:
             await self.update_session({
                 "modalities": ["text", "audio"],
                 "instructions": self.instructions,
                 "voice": self.voice,
                 "input_audio_format": "pcm16",
+                "input_audio_noise_reduction": {
+                    "type": "far_field"
+                },
                 "output_audio_format": "pcm16",
                 "input_audio_transcription": {
                     "model": "whisper-1"
@@ -142,6 +146,9 @@ class RealtimeClient:
                 "instructions": self.instructions,
                 "voice": self.voice,
                 "input_audio_format": "pcm16",
+                "input_audio_noise_reduction": {
+                    "type": "far_field"
+                },
                 "output_audio_format": "pcm16",
                 "input_audio_transcription": {
                     "model": "whisper-1"
@@ -150,7 +157,32 @@ class RealtimeClient:
                     "type": "server_vad",
                     "threshold": 0.5,
                     "prefix_padding_ms": 500,
-                    "silence_duration_ms": 200
+                    "silence_duration_ms": 200,
+                    "create_response": True,
+                    "interrupt_response": True,
+                },
+                "tools": tools,
+                "tool_choice": "auto",
+                "temperature": self.temperature,
+            })
+        elif self.turn_detection_mode == TurnDetectionMode.SEMANTIC_VAD:
+            await self.update_session({
+                "modalities": ["text", "audio"],
+                "instructions": self.instructions,
+                "voice": self.voice,
+                "input_audio_format": "pcm16",
+                "input_audio_noise_reduction": {
+                    "type": "far_field"
+                },
+                "output_audio_format": "pcm16",
+                "input_audio_transcription": {
+                    "model": "whisper-1"
+                },
+                "turn_detection": {
+                    "type": "semantic_vad",
+                    "eagerness": "auto",
+                    "create_response": True,
+                    "interrupt_response": True,
                 },
                 "tools": tools,
                 "tool_choice": "auto",
@@ -322,7 +354,7 @@ class RealtimeClient:
                 
                 # Handle interruptions
                 elif event_type == "input_audio_buffer.speech_started":
-                    print("\n[Speech detected")
+                    print("\n[Speech detected]")
                     if self._is_responding:
                         await self.handle_interruption()
 
