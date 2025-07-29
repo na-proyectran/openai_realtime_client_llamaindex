@@ -2,6 +2,9 @@ import asyncio
 from fastapi import WebSocket
 
 from openai_realtime_client import RealtimeClient
+import base64
+import json
+from starlette.websockets import WebSocketState
 
 class WsHandler:
     def __init__(self, ws: WebSocket):
@@ -35,3 +38,16 @@ class WsHandler:
         self.streaming = False
         if self.ws:
             self.ws.close()
+
+    async def send_audio(self, audio: bytes) -> None:
+        """Send base64 encoded audio over the websocket."""
+        if self.ws.application_state == WebSocketState.CONNECTED:
+            payload = {
+                "audio": base64.b64encode(audio).decode()
+            }
+            await self.ws.send_text(json.dumps(payload))
+
+    async def send_clear_event(self) -> None:
+        """Notify the client to stop audio playback."""
+        if self.ws.application_state == WebSocketState.CONNECTED:
+            await self.ws.send_text(json.dumps({"event": "clear"}))
