@@ -14,7 +14,7 @@ from llama_index.core.tools import BaseTool, AsyncBaseTool, ToolSelection, adapt
 
 class TurnDetectionMode(Enum):
     SERVER_VAD = "server_vad"
-    SEMANTIC_VAD = "server_vad"
+    SEMANTIC_VAD = "semantic_vad"
     MANUAL = "manual"
 
 class RealtimeClient:
@@ -263,7 +263,7 @@ class RealtimeClient:
             }
         }
         if functions:
-            event["response"]["tools"] = functions
+            event["response"]["tools"] = functions # type: ignore
             
         await self.ws.send(json.dumps(event))
 

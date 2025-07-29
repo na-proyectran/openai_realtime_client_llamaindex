@@ -5,19 +5,11 @@ from dotenv import load_dotenv
 from pynput import keyboard
 from openai_realtime_client import RealtimeClient, AudioHandler, InputHandler, TurnDetectionMode
 from llama_index.core.tools import FunctionTool
+from tools import get_current_time
 
 # Add your own tools here!
 # NOTE: FunctionTool parses the docstring to get description, the tool name is the function name
-def get_phone_number(name: str) -> str:
-    """Get my phone number."""
-    if name == "Jerry":
-        return "1234567890"
-    elif name == "Logan":
-        return "0987654321"
-    else:
-        return "Unknown"
-
-tools = [FunctionTool.from_defaults(fn=get_phone_number)]
+tools = [FunctionTool.from_defaults(fn=get_current_time)]
 
 async def main():
     load_dotenv()
@@ -44,7 +36,7 @@ async def main():
     
     try:
         await client.connect()
-        message_handler = asyncio.create_task(client.handle_messages())
+        asyncio.create_task(client.handle_messages())
         
         print("Connected to OpenAI Realtime API!")
         print("Audio streaming will start automatically.")
@@ -52,7 +44,7 @@ async def main():
         print("")
         
         # Start continuous audio streaming
-        streaming_task = asyncio.create_task(audio_handler.start_streaming(client))
+        asyncio.create_task(audio_handler.start_streaming(client))
         
         # Simple input loop for quit command
         while True:
