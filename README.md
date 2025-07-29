@@ -46,6 +46,13 @@ Or to use streaming mode (which allows you to interrupt the chatbot):
 python ./examples/streaming_cli.py
 ```
 
+To proxy the Realtime API behind a simple FastAPI server:
+
+```bash
+pip install fastapi==0.116.0 uvicorn==0.35.0 websockets==15.0.1
+python ./examples/fastapi_server.py
+```
+
 **NOTE:** Streaming mode can be a little janky, best to use headphones in a quiet environment.
 
 Take a look at the examples, add your own tools, and build something amazing!
