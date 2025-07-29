@@ -117,7 +117,7 @@ class RealtimeClient:
             "OpenAI-Beta": "realtime=v1"
         }
         
-        self.ws = await websockets.connect(url, extra_headers=headers)
+        self.ws = await websockets.connect(url, additional_headers=headers)
         
         # Set up default session configuration
         tools = [t.metadata.to_openai_tool()['function'] for t in self.tools]

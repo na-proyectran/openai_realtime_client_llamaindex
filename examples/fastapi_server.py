@@ -1,55 +1,79 @@
 import os
 import asyncio
-import base64
 from dotenv import load_dotenv
+from pynput import keyboard
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
-from openai_realtime_client import RealtimeClient
+from starlette.staticfiles import StaticFiles
+from openai_realtime_client import RealtimeClient, TurnDetectionMode, WsHandler, InputHandler
+from llama_index.core.tools import FunctionTool
+from tools import get_current_time
+
+# Load environment variables
+load_dotenv()
+
+# Initialize tools
+tools = [FunctionTool.from_defaults(fn=get_current_time)]
 
 app = FastAPI()
 
 @app.get("/health", response_class=JSONResponse)
-async def health() -> JSONResponse:
+async def health_check():
     return {"message": "Realtime Assistant server is running!"}
 
 @app.websocket("/ws")
 async def handle_media_stream(websocket: WebSocket):
-    """Handle WebSocket connections between a browser client and OpenAI."""
-    print("Client connected")
     await websocket.accept()
-
-    load_dotenv()
-
-    # Forward text and audio events from OpenAI back to the websocket client
-    def on_text_delta(text: str) -> None:
-        asyncio.create_task(websocket.send_json({"text": text}))
-
-    def on_audio_delta(audio: bytes) -> None:
-        payload = base64.b64encode(audio).decode("utf-8")
-        asyncio.create_task(websocket.send_json({"audio": payload}))
+    ws_handler = WsHandler(websocket)
+    input_handler = InputHandler()
+    input_handler.loop = asyncio.get_running_loop()
 
     client = RealtimeClient(
-        api_key=os.environ.get("OPENAI_API_KEY"),
-        model=os.environ.get("OPENAI_MODEL"),
-        on_text_delta=on_text_delta,
-        on_audio_delta=on_audio_delta,
+        api_key=os.getenv("OPENAI_API_KEY"),
+        model=os.getenv("OPENAI_MODEL"),
+        on_text_delta=lambda text: print(f"\nAssistant: {text}", end="", flush=True),
+        # TODO on_audio_delta=???,
+        on_input_transcript=lambda transcript: print(f"\nYou said: {transcript}\nAssistant: ", end="", flush=True),
+        on_output_transcript=lambda transcript: print(f"{transcript}", end="", flush=True),
+        # TODO: on_interrupt=???,
+        turn_detection_mode=TurnDetectionMode.SEMANTIC_VAD,
+        language="es",
+        tools=tools,
     )
 
-    await client.connect()
-    handle_task = asyncio.create_task(client.handle_messages())
+    # Start keyboard listener in a separate thread
+    listener = keyboard.Listener(on_press=input_handler.on_press)
+    listener.start()
 
     try:
-        async for pcm in websocket.iter_bytes():
-            await client.stream_audio(pcm)
-    except WebSocketDisconnect:
-        print("Client disconnected")
+        await client.connect()
+        asyncio.create_task(client.handle_messages())
+
+        print("Connected to OpenAI Realtime API!")
+        print("Audio streaming will start automatically.")
+        print("Press 'q' to quit")
+        print("")
+
+        # Start continuous audio streaming
+        asyncio.create_task(ws_handler.start_streaming(client))
+
+        # Simple input loop for quit command
+        while True:
+            command, _ = await input_handler.command_queue.get()
+
+            if command == 'q':
+                break
+
+    except Exception as e:
+        print(f"Error: {e}")
     finally:
+        ws_handler.stop_streaming()
         await client.close()
-        handle_task.cancel()
-        await websocket.close()
+
+# Serve static files
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 if __name__ == "__main__":
-    # pip install fastapi==0.116.0 uvicorn==0.35.0 websockets==15.0.1
+    print("Starting Realtime Assistant server...")
     import uvicorn
-
     uvicorn.run(app, host="0.0.0.0", port=8000)

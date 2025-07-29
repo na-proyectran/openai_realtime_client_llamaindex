@@ -7,12 +7,14 @@ from openai_realtime_client import RealtimeClient, AudioHandler, InputHandler, T
 from llama_index.core.tools import FunctionTool
 from tools import get_current_time
 
+# Load environment variables
+load_dotenv()
+
 # Add your own tools here!
 # NOTE: FunctionTool parses the docstring to get description, the tool name is the function name
 tools = [FunctionTool.from_defaults(fn=get_current_time)]
 
 async def main():
-    load_dotenv()
     audio_handler = AudioHandler()
     input_handler = InputHandler()
     input_handler.loop = asyncio.get_running_loop()
