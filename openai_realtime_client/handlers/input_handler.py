@@ -31,6 +31,8 @@ class InputHandler:
                     self.command_queue.put_nowait, ('enter', self.text_input)
                 )
                 self.text_input = ""
+            elif key == keyboard.Key.backspace:
+                self.text_input = self.text_input[:-1]
             elif key == keyboard.KeyCode.from_char('r'):
                 self.loop.call_soon_threadsafe(
                     self.command_queue.put_nowait, ('r', None)
@@ -39,10 +41,7 @@ class InputHandler:
                 self.loop.call_soon_threadsafe(
                     self.command_queue.put_nowait, ('q', None)
                 )
-            elif hasattr(key, 'char'):
-                if key == keyboard.Key.backspace:
-                    self.text_input = self.text_input[:-1]
-                else:
-                    self.text_input += key.char
+            elif hasattr(key, 'char') and key.char is not None:
+                self.text_input += key.char
         except AttributeError:
             pass

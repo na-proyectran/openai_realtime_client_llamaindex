@@ -1,24 +1,18 @@
 import asyncio
 import os
+from dotenv import load_dotenv
 
 from pynput import keyboard
 from openai_realtime_client import RealtimeClient, InputHandler, AudioHandler
 from llama_index.core.tools import FunctionTool
+from tools import get_current_time
 
 # Add your own tools here!
 # NOTE: FunctionTool parses the docstring to get description, the tool name is the function name
-def get_phone_number(name: str) -> str:
-    """Get my phone number."""
-    if name == "Jerry":
-        return "1234567890"
-    elif name == "Logan":
-        return "0987654321"
-    else:
-        return "Unknown"
-
-tools = [FunctionTool.from_defaults(fn=get_phone_number)]
+tools = [FunctionTool.from_defaults(fn=get_current_time)]
 
 async def main():
+    load_dotenv()
     # Initialize handlers
     audio_handler = AudioHandler()
     input_handler = InputHandler()
@@ -27,6 +21,7 @@ async def main():
     # Initialize the realtime client
     client = RealtimeClient(
         api_key=os.environ.get("OPENAI_API_KEY"),
+        model=os.environ.get("OPENAI_MODEL"),
         on_text_delta=lambda text: print(f"\nAssistant: {text}", end="", flush=True),
         on_audio_delta=lambda audio: audio_handler.play_audio(audio),
         on_input_transcript=lambda transcript: print(f"\nYou said: {transcript}\nAssistant: ", end="", flush=True),
@@ -43,7 +38,7 @@ async def main():
         await client.connect()
         
         # Start message handling in the background
-        message_handler = asyncio.create_task(client.handle_messages())
+        asyncio.create_task(client.handle_messages())
         
         print("Connected to OpenAI Realtime API!")
         print("Commands:")

@@ -1,3 +1,4 @@
+import os
 import asyncio
 import websockets
 import json
@@ -13,6 +14,7 @@ from llama_index.core.tools import BaseTool, AsyncBaseTool, ToolSelection, adapt
 
 class TurnDetectionMode(Enum):
     SERVER_VAD = "server_vad"
+    SEMANTIC_VAD = "semantic_vad"
     MANUAL = "manual"
 
 class RealtimeClient:
@@ -58,10 +60,13 @@ class RealtimeClient:
     def __init__(
         self, 
         api_key: str,
-        model: str = "gpt-4o-realtime-preview-2024-10-01",
+        model: str = os.environ.get(
+            "OPENAI_MODEL", "gpt-4o-mini-realtime-preview-2024-12-17"
+        ),
         voice: str = "alloy",
         instructions: str = "You are a helpful assistant",
         temperature: float = 0.8,
+        language: str = "en",
         turn_detection_mode: TurnDetectionMode = TurnDetectionMode.MANUAL,
         tools: Optional[List[BaseTool]] = None,
         on_text_delta: Optional[Callable[[str], None]] = None,
@@ -82,6 +87,7 @@ class RealtimeClient:
         self.on_output_transcript = on_output_transcript
         self.instructions = instructions
         self.temperature = temperature
+        self.language = language
         self.base_url = "wss://api.openai.com/v1/realtime"
         self.extra_event_handlers = extra_event_handlers or {}
         self.turn_detection_mode = turn_detection_mode
@@ -118,16 +124,20 @@ class RealtimeClient:
         for t in tools:
             t['type'] = 'function'  # TODO: OpenAI docs didn't say this was needed, but it was
 
-        
+
         if self.turn_detection_mode == TurnDetectionMode.MANUAL:
             await self.update_session({
                 "modalities": ["text", "audio"],
                 "instructions": self.instructions,
                 "voice": self.voice,
                 "input_audio_format": "pcm16",
+                "input_audio_noise_reduction": {
+                    "type": "far_field"
+                },
                 "output_audio_format": "pcm16",
                 "input_audio_transcription": {
-                    "model": "whisper-1"
+                    "model": "gpt-4o-mini-transcribe",
+                    "language": self.language,
                 },
                 "tools": tools,
                 "tool_choice": "auto",
@@ -139,15 +149,45 @@ class RealtimeClient:
                 "instructions": self.instructions,
                 "voice": self.voice,
                 "input_audio_format": "pcm16",
+                "input_audio_noise_reduction": {
+                    "type": "far_field"
+                },
                 "output_audio_format": "pcm16",
                 "input_audio_transcription": {
-                    "model": "whisper-1"
+                    "model": "gpt-4o-mini-transcribe",
+                    "language": self.language,
                 },
                 "turn_detection": {
                     "type": "server_vad",
                     "threshold": 0.5,
                     "prefix_padding_ms": 500,
-                    "silence_duration_ms": 200
+                    "silence_duration_ms": 200,
+                    "create_response": True,
+                    "interrupt_response": True,
+                },
+                "tools": tools,
+                "tool_choice": "auto",
+                "temperature": self.temperature,
+            })
+        elif self.turn_detection_mode == TurnDetectionMode.SEMANTIC_VAD:
+            await self.update_session({
+                "modalities": ["text", "audio"],
+                "instructions": self.instructions,
+                "voice": self.voice,
+                "input_audio_format": "pcm16",
+                "input_audio_noise_reduction": {
+                    "type": "far_field"
+                },
+                "output_audio_format": "pcm16",
+                "input_audio_transcription": {
+                    "model": "gpt-4o-mini-transcribe",
+                    "language": self.language,
+                },
+                "turn_detection": {
+                    "type": "semantic_vad",
+                    "eagerness": "auto",
+                    "create_response": True,
+                    "interrupt_response": True,
                 },
                 "tools": tools,
                 "tool_choice": "auto",
@@ -223,7 +263,7 @@ class RealtimeClient:
             }
         }
         if functions:
-            event["response"]["tools"] = functions
+            event["response"]["tools"] = functions # type: ignore
             
         await self.ws.send(json.dumps(event))
 
@@ -319,7 +359,7 @@ class RealtimeClient:
                 
                 # Handle interruptions
                 elif event_type == "input_audio_buffer.speech_started":
-                    print("\n[Speech detected")
+                    print("\n[Speech detected]")
                     if self._is_responding:
                         await self.handle_interruption()
 

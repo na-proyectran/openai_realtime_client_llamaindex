@@ -47,6 +47,7 @@ class AudioHandler:
         self.recording_stream: Optional[pyaudio.Stream] = None
         self.recording_thread = None
         self.recording = False
+        self.frames = []
 
         # streaming params
         self.streaming = False
@@ -54,7 +55,7 @@ class AudioHandler:
 
         # Playback params
         self.playback_stream = None
-        self.playback_buffer = queue.Queue(maxsize=20)
+        self.playback_buffer = queue.Queue(maxsize=50)
         self.playback_event = threading.Event()
         self.playback_thread = None
         self.stop_playback = False
@@ -219,7 +220,6 @@ class AudioHandler:
         """Stop audio playback immediately."""
         self.stop_playback = True
         self.playback_buffer.queue.clear()  # Clear any pending audio
-        self.currently_playing = False
         self.playback_event.set()
 
     def cleanup(self):
