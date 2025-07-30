@@ -8,7 +8,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.13"
-llama-index-core = "0.12.41"
+llama-index-core = "0.12.52.post1"
 pyaudio = "0.2.14"
 audioop-lts = { version = "0.2.1", python = ">=3.13" }
 pynput = "1.8.1"
@@ -19,9 +19,10 @@ python-dotenv = "1.1.1"
 tzdata = ">=2025.2"
 fastapi = "0.116.0"
 uvicorn = "0.35.0"
-openai = "1.97.1"
+openai = "1.98.0"
 qdrant-client = "1.15.0"
 llama-index-vector-stores-qdrant = "0.6.1"
+llama-index-llms-openai = "0.4.7"
 llama-index-embeddings-openai = "0.3.1"
 
 [build-system]

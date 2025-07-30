@@ -45,3 +45,8 @@ def get_current_date() -> dict:
         "current_month": m_str,
         "timezone": TIMEZONE
     }
+
+
+def query_rag() -> str:
+    # TODO: call query_rag() in rag_tool
+    return "TEST"
