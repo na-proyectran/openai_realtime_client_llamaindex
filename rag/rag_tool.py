@@ -52,3 +52,22 @@ def query_rag(query: str, top_k: int = 10, top_n: int = 3) -> Any:
     engine = index.as_query_engine(retriever=retriever, node_postprocessors=postprocessors)
     response = engine.query(query)
     return response
+
+
+async def aquery_rag(query: str, top_k: int = 10, top_n: int = 3) -> Any:
+    """Asynchronously query the RAG index and return the reranked response."""
+    index = get_index()
+    retriever = index.as_retriever(similarity_top_k=top_k)
+    reranker = LLMRerank(
+        llm=OpenAI(model=RAG_MODEL),
+        top_n=top_n,
+        choice_select_prompt=CHOICE_SELECT_PROMPT,
+    )
+    postprocessors = [SimilarityPostprocessor(similarity_cutoff=0.0), reranker]
+    engine = index.as_query_engine(
+        retriever=retriever,
+        node_postprocessors=postprocessors,
+    )
+    response = await engine.aquery(query)
+    return response
+
