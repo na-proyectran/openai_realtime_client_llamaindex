@@ -22,6 +22,7 @@ startBtn.addEventListener('click', async () => {
     startBtn.disabled = true;
     stopBtn.disabled = false;
     muteBtn.disabled = false;
+    isMuted = false;
 });
 
 stopBtn.addEventListener('click', () => {
@@ -31,7 +32,7 @@ stopBtn.addEventListener('click', () => {
     stopBtn.disabled = true;
     muteBtn.disabled = true;
     muteBtn.classList.remove('active');
-    isMuted = false;
+    isMuted = true;
 });
 
 muteBtn.addEventListener('click', () => {
