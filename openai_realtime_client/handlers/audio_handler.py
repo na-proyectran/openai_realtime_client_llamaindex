@@ -5,7 +5,6 @@ import queue
 import io
 from typing import Optional
 
-from pydub import AudioSegment
 import threading
 
 from ..client.realtime_client import RealtimeClient
@@ -193,25 +192,13 @@ class AudioHandler:
             self.playback_stream.close()
             self.playback_stream = None
 
-    def _play_audio_chunk(self, audio_chunk):
+    def _play_audio_chunk(self, audio_chunk: bytes):
         try:
-            # Convert the audio chunk to the correct format
-            audio_segment = AudioSegment(
-                audio_chunk,
-                sample_width=2,
-                frame_rate=24000,
-                channels=1
-            )
-            
-            # Ensure the audio is in the correct format for playback
-            audio_data = audio_segment.raw_data
-            
-            # Play the audio chunk in smaller portions to allow for quicker interruption
-            chunk_size = 1024  # Adjust this value as needed
-            for i in range(0, len(audio_data), chunk_size):
+            chunk_size = 1024
+            for i in range(0, len(audio_chunk), chunk_size):
                 if self.playback_event.is_set():
                     break
-                chunk = audio_data[i:i+chunk_size]
+                chunk = audio_chunk[i:i + chunk_size]
                 self.playback_stream.write(chunk)
         except Exception as e:
             print(f"Error playing audio chunk: {e}")
