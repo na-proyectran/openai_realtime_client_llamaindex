@@ -2,7 +2,7 @@ import os
 import asyncio
 from dotenv import load_dotenv
 from pynput import keyboard
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket
 from fastapi.responses import JSONResponse
 from starlette.staticfiles import StaticFiles
 from openai_realtime_client import RealtimeClient, TurnDetectionMode, WsHandler, InputHandler
