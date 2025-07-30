@@ -28,7 +28,7 @@ async def handle_media_stream(websocket: WebSocket):
     input_handler = InputHandler()
     input_handler.loop = asyncio.get_running_loop()
 
-    client = RealtimeClient(
+    client_args = dict(
         api_key=os.getenv("OPENAI_API_KEY"),
         model=os.getenv("OPENAI_MODEL"),
         on_text_delta=lambda text: print(f"\nAssistant: {text}", end="", flush=True),
@@ -46,29 +46,28 @@ async def handle_media_stream(websocket: WebSocket):
     listener.start()
 
     try:
-        await client.connect()
-        asyncio.create_task(client.handle_messages())
+        async with RealtimeClient(**client_args) as client:
+            asyncio.create_task(client.handle_messages())
 
-        print("Connected to OpenAI Realtime API!")
-        print("Audio streaming will start automatically.")
-        print("Press 'q' to quit")
-        print("")
+            print("Connected to OpenAI Realtime API!")
+            print("Audio streaming will start automatically.")
+            print("Press 'q' to quit")
+            print("")
 
-        # Start continuous audio streaming
-        asyncio.create_task(ws_handler.start_streaming(client))
+            # Start continuous audio streaming
+            asyncio.create_task(ws_handler.start_streaming(client))
 
-        # Simple input loop for quit command
-        while True:
-            command, _ = await input_handler.command_queue.get()
+            # Simple input loop for quit command
+            while True:
+                command, _ = await input_handler.command_queue.get()
 
-            if command == 'q':
-                break
+                if command == 'q':
+                    break
 
     except Exception as e:
         print(f"Error: {e}")
     finally:
         await ws_handler.stop_streaming()
-        await client.close()
 
 # Serve static files
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
