@@ -13,7 +13,8 @@ const hal = document.querySelector('.animation');
 hal.classList.add('idle');
 
 startBtn.addEventListener('click', async () => {
-    ws = new WebSocket(`ws://${location.host}/ws`);
+    const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+    ws = new WebSocket(`${protocol}://${location.host}/ws`);
     ws.onmessage = handleMessage;
     await startAudio();
     startBtn.disabled = true;
