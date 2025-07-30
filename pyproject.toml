@@ -7,10 +7,10 @@ license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.13"
+python = ">=3.13.5"
 llama-index-core = "0.12.41"
 pyaudio = "0.2.14"
-audioop-lts = { version = "...", python = "^3.13" }
+audioop-lts = { version = "0.2.1", python = ">=3.13.5" }
 pynput = "1.8.1"
 pydub = "0.25.1"
 websockets = "15.0.1"
