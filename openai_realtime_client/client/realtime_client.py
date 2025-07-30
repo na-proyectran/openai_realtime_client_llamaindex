@@ -114,10 +114,18 @@ class RealtimeClient:
         # Track printing state for input and output transcripts
         self._print_input_transcript = False
         self._output_transcript_buffer = ""
-        
-        
+    async def __aenter__(self) -> "RealtimeClient":
+        """Enter the runtime context and connect to the API."""
+        await self.connect()
+        return self
 
-        
+    async def __aexit__(self, exc_type, exc, tb) -> None:
+        """Exit the runtime context and close the connection."""
+        try:
+            await self.close()
+        finally:
+            if exc:
+                return False
 
     async def connect(self) -> None:
         """Establish WebSocket connection with the Realtime API.
