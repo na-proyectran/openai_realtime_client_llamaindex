@@ -4,7 +4,7 @@ from fastapi import WebSocket
 from openai_realtime_client import RealtimeClient
 import base64
 import json
-from starlette.websockets import WebSocketState
+from starlette.websockets import WebSocketState, WebSocketDisconnect
 
 class WsHandler:
     def __init__(self, ws: WebSocket):
@@ -21,22 +21,23 @@ class WsHandler:
         self.streaming = True
         print("\nStreaming audio... Press 'q' to stop.")
 
-        while self.streaming:
-            try:
-                # Read raw PCM data
-                async for data in self.ws.iter_bytes():
-                    # Stream directly without trying to decode
-                    await client.stream_audio(data)
-            except Exception as e:
-                print(f"Error streaming: {e}")
-                break
-            await asyncio.sleep(0.01)
+        try:
+            async for data in self.ws.iter_bytes():
+                if not self.streaming:
+                    break
+                # Stream directly without trying to decode
+                await client.stream_audio(data)
+                await asyncio.sleep(0.01)
+        except WebSocketDisconnect:
+            pass
+        except Exception as e:
+            print(f"Error streaming: {e}")
 
 
     async def stop_streaming(self):
         """Stop audio streaming."""
         self.streaming = False
-        if self.ws and self.ws.application_state == WebSocketState.CONNECTED:
+        if self.ws and self.ws.application_state != WebSocketState.DISCONNECTED:
             await self.ws.close()
 
     async def send_audio(self, audio: bytes) -> None:
