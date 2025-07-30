@@ -56,3 +56,9 @@ python ./examples/ws_hal9000.py
 **NOTE:** Streaming mode can be a little janky, best to use headphones in a quiet environment.
 
 Take a look at the examples, add your own tools, and build something amazing!
+
+### Connection errors
+
+`RealtimeClient.connect` logs any `OSError` or `websockets.WebSocketException`
+encountered when establishing the WebSocket connection and re-raises them as a
+`RuntimeError`. Ensure you handle this exception when connecting.

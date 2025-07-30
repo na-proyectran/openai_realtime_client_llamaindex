@@ -4,12 +4,15 @@ import websockets
 import json
 import base64
 import io
+import logging
 
 from typing import Optional, Callable, List, Dict, Any
 from enum import Enum
 from pydub import AudioSegment
 
 from llama_index.core.tools import BaseTool, AsyncBaseTool, ToolSelection, adapt_to_async_tool, call_tool_with_selection
+
+logger = logging.getLogger(__name__)
 
 
 def _convert_audio_bytes(audio_bytes: bytes) -> str:
@@ -117,14 +120,22 @@ class RealtimeClient:
         
 
     async def connect(self) -> None:
-        """Establish WebSocket connection with the Realtime API."""
+        """Establish WebSocket connection with the Realtime API.
+
+        Raises:
+            RuntimeError: If the WebSocket connection fails.
+        """
         url = f"{self.base_url}?model={self.model}"
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "OpenAI-Beta": "realtime=v1"
         }
-        
-        self.ws = await websockets.connect(url, additional_headers=headers)
+
+        try:
+            self.ws = await websockets.connect(url, additional_headers=headers)
+        except (OSError, websockets.WebSocketException) as e:
+            logger.exception("Failed to connect to the Realtime API")
+            raise RuntimeError("Failed to establish connection to the Realtime API") from e
         
         # Set up default session configuration
         tools = [t.metadata.to_openai_tool()['function'] for t in self.tools]
