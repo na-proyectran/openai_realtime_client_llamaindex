@@ -12,6 +12,13 @@ from pydub import AudioSegment
 from llama_index.core.tools import BaseTool, AsyncBaseTool, ToolSelection, adapt_to_async_tool, call_tool_with_selection
 
 
+def _convert_audio_bytes(audio_bytes: bytes) -> str:
+    """Convert audio bytes to 24kHz mono PCM16 and return base64 string."""
+    audio = AudioSegment.from_file(io.BytesIO(audio_bytes))
+    audio = audio.set_frame_rate(24000).set_channels(1).set_sample_width(2)
+    return base64.b64encode(audio.raw_data).decode()
+
+
 class TurnDetectionMode(Enum):
     SERVER_VAD = "server_vad"
     SEMANTIC_VAD = "semantic_vad"
@@ -223,9 +230,7 @@ class RealtimeClient:
     async def send_audio(self, audio_bytes: bytes) -> None:
         """Send audio data to the API."""
         # Convert audio to required format (24kHz, mono, PCM16)
-        audio = AudioSegment.from_file(io.BytesIO(audio_bytes))
-        audio = audio.set_frame_rate(24000).set_channels(1).set_sample_width(2)
-        pcm_data = base64.b64encode(audio.raw_data).decode()
+        pcm_data = await asyncio.to_thread(_convert_audio_bytes, audio_bytes)
         
         # Append audio to buffer
         append_event = {
