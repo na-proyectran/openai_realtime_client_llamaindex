@@ -33,11 +33,11 @@ class WsHandler:
             await asyncio.sleep(0.01)
 
 
-    def stop_streaming(self):
+    async def stop_streaming(self):
         """Stop audio streaming."""
         self.streaming = False
-        if self.ws:
-            self.ws.close()
+        if self.ws and self.ws.application_state == WebSocketState.CONNECTED:
+            await self.ws.close()
 
     async def send_audio(self, audio: bytes) -> None:
         """Send base64 encoded audio over the websocket."""

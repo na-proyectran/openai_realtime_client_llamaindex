@@ -67,7 +67,7 @@ async def handle_media_stream(websocket: WebSocket):
     except Exception as e:
         print(f"Error: {e}")
     finally:
-        ws_handler.stop_streaming()
+        await ws_handler.stop_streaming()
         await client.close()
 
 # Serve static files
