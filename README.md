@@ -50,7 +50,7 @@ To proxy the Realtime API behind a simple FastAPI server:
 
 ```bash
 pip install fastapi==0.116.0 uvicorn==0.35.0 websockets==15.0.1
-python ./examples/fastapi_server.py
+python ./examples/ws_hal9000.py
 ```
 
 **NOTE:** Streaming mode can be a little janky, best to use headphones in a quiet environment.
