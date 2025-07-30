@@ -1,19 +1,40 @@
 import os
 import asyncio
 from dotenv import load_dotenv
+from pydantic import BaseModel
 from pynput import keyboard
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import JSONResponse
 from starlette.staticfiles import StaticFiles
 from openai_realtime_client import RealtimeClient, TurnDetectionMode, WsHandler, InputHandler
-from llama_index.core.tools import FunctionTool
-from tools import get_current_time
+from llama_index.core.tools import FunctionTool, ToolMetadata
+from tools import get_current_time, get_current_date
 
 # Load environment variables
 load_dotenv()
 
 # Initialize tools
-tools = [FunctionTool.from_defaults(fn=get_current_time)]
+class NoArgsSchema(BaseModel):
+    pass
+tools = [
+    FunctionTool(
+        fn=get_current_time,
+        metadata=ToolMetadata(
+            name="get_current_time",
+            description="Devuelve la hora actual en formato HH:MM y la zona horaria configurada",
+            fn_schema=NoArgsSchema
+        ),
+        # async_fn, callback, async_callback, partial_params quedan en None
+    ),
+    FunctionTool(
+        fn=get_current_date,
+        metadata=ToolMetadata(
+            name="get_current_date",
+            description="Devuelve la fecha actual en formato DD:MM y la zona horaria configurada",
+            fn_schema=NoArgsSchema
+        ),
+    ),
+]
 
 app = FastAPI()
 
