@@ -6,9 +6,11 @@ let isRecording = false;
 let pulseTimeout;
 let nextPlaybackTime = 0;
 let activeSources = [];
+let isMuted = false;
 
 const startBtn = document.getElementById('startBtn');
 const stopBtn = document.getElementById('stopBtn');
+const muteBtn = document.getElementById('muteBtn');
 const hal = document.querySelector('.animation');
 hal.classList.add('idle');
 
@@ -19,6 +21,7 @@ startBtn.addEventListener('click', async () => {
     await startAudio();
     startBtn.disabled = true;
     stopBtn.disabled = false;
+    muteBtn.disabled = false;
 });
 
 stopBtn.addEventListener('click', () => {
@@ -26,6 +29,19 @@ stopBtn.addEventListener('click', () => {
     ws.close();
     startBtn.disabled = false;
     stopBtn.disabled = true;
+    muteBtn.disabled = true;
+    muteBtn.classList.remove('active');
+    isMuted = false;
+});
+
+muteBtn.addEventListener('click', () => {
+    isMuted = !isMuted;
+    muteBtn.classList.toggle('active', isMuted);
+    if (mediaStream) {
+        mediaStream.getAudioTracks().forEach(t => {
+            t.enabled = !isMuted;
+        });
+    }
 });
 
 function handleMessage(event) {
@@ -57,7 +73,7 @@ async function startAudio() {
         processor = new AudioWorkletNode(audioContext, 'capture-processor');
         processor.port.onmessage = e => {
             const pcm16 = e.data;
-            if (ws.readyState === WebSocket.OPEN) {
+            if (!isMuted && ws.readyState === WebSocket.OPEN) {
                 ws.send(pcm16.buffer);
             }
         };
@@ -66,7 +82,7 @@ async function startAudio() {
         processor.onaudioprocess = e => {
             const input = e.inputBuffer.getChannelData(0);
             const pcm16 = floatTo16BitPCM(input);
-            if (ws.readyState === WebSocket.OPEN) {
+            if (!isMuted && ws.readyState === WebSocket.OPEN) {
                 ws.send(pcm16.buffer);
             }
         };
