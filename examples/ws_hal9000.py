@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from starlette.staticfiles import StaticFiles
 from openai_realtime_client import RealtimeClient, TurnDetectionMode, WsHandler, InputHandler
 from llama_index.core.tools import FunctionTool, ToolMetadata
-from tools import get_current_time, get_current_date
+from tools import get_current_time, get_current_date, query_rag
 
 # Load environment variables
 load_dotenv()
@@ -16,6 +16,10 @@ load_dotenv()
 # Initialize tools
 class NoArgsSchema(BaseModel):
     pass
+
+class RagArgsSchema(BaseModel):
+    query: str
+
 tools = [
     FunctionTool(
         fn=get_current_time,
@@ -32,6 +36,14 @@ tools = [
             name="get_current_date",
             description="Devuelve la fecha actual en formato DD:MM y la zona horaria configurada",
             fn_schema=NoArgsSchema
+        ),
+    ),
+    FunctionTool(
+        fn=query_rag,
+        metadata=ToolMetadata(
+            name="query_rag",
+            description="Consulta la documentación para responder preguntas relativas a la Casa de los balcones.",
+            fn_schema=RagArgsSchema
         ),
     ),
 ]

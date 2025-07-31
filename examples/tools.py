@@ -2,6 +2,8 @@ import os
 from dotenv import load_dotenv
 from datetime import datetime
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from rag.rag_tool import query_rag as _query_rag
+from rag.rag_tool import aquery_rag as _aquery_rag
 
 load_dotenv()
 
@@ -60,15 +62,12 @@ def query_rag(query: str, top_k: int = 10, top_n: int = 3) -> str:
         Number of documents to return after reranking.
     """
 
-    from rag.rag_tool import query_rag as _query_rag
-
     response = _query_rag(query=query, top_k=top_k, top_n=top_n)
     return str(response)
 
 
 async def aquery_rag(query: str, top_k: int = 10, top_n: int = 3) -> str:
     """Async wrapper around :func:`rag.rag_tool.aquery_rag`."""
-    from rag.rag_tool import aquery_rag as _aquery_rag
 
     response = await _aquery_rag(query=query, top_k=top_k, top_n=top_n)
     return str(response)

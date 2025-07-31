@@ -20,11 +20,15 @@ tzdata = ">=2025.2"
 fastapi = "0.116.0"
 uvicorn = "0.35.0"
 openai = "1.98.0"
-qdrant-client = "1.15.0"
 llama-index-vector-stores-qdrant = "0.6.1"
 llama-index-llms-openai = "0.4.7"
 llama-index-embeddings-openai = "0.3.1"
-
+llama-index-agent-openai="0.4.12"
+fastembed-gpu = "0.7.1"
+transformers = { version = "4.54.1", extras = ["torch"] }
+arize-phoenix="11.17.0"
+openinference-instrumentation-llama_index="4.3.3"
+llama-index-callbacks-openinference="0.4.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
