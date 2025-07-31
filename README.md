@@ -30,6 +30,12 @@ echo "OPENAI_API_KEY=sk-..." >> .env
 # Optional: edit OPENAI_MODEL in .env if you want a different model
 ```
 
+### RAG documents
+
+Place any text files you want indexed under `rag_docs/` in the project root.
+You can also specify another directory by setting the `RAG_DOCS_DIR`
+environment variable before running the examples.
+
 ## Usage
 
 Assuming you installed and cloned the repo (or copy-pasted the examples), you can immediately run the examples.
