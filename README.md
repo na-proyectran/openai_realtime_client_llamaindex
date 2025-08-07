@@ -59,6 +59,26 @@ pip install fastapi==0.116.0 uvicorn==0.35.0 websockets==15.0.1
 python ./examples/ws_hal9000.py
 ```
 
+## Docker
+
+You can run the demo in a container using the provided Dockerfile. It runs
+`unity_ws_server.py` by default.
+
+Build the image:
+
+```bash
+docker build -t openai-realtime-demo .
+```
+
+Run the container (ensure `.env` contains your `OPENAI_API_KEY`):
+
+```bash
+docker run --env-file .env -p 8000:8000 openai-realtime-demo
+```
+
+This starts the FastAPI demo and exposes it on port `8000`.
+
+
 **NOTE:** Streaming mode can be a little janky, best to use headphones in a quiet environment.
 
 Take a look at the examples, add your own tools, and build something amazing!
