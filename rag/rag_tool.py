@@ -7,7 +7,6 @@ import os
 
 from dotenv import load_dotenv
 from llama_index.core.postprocessor import SimilarityPostprocessor
-from llama_index.core.postprocessor.llm_rerank import LLMRerank
 from llama_index.core.response_synthesizers import ResponseMode
 from llama_index.core import get_response_synthesizer
 from llama_index.core.prompts import PromptTemplate
@@ -20,7 +19,7 @@ from . import get_index
 load_dotenv()
 
 # Default RAG model
-RAG_MODEL = os.getenv("RAG_MODEL", "gpt-4o-mini-realtime-preview-2024-12-17")
+RAG_MODEL = os.getenv("RAG_MODEL")
 
 # Prompt for document selection
 CHOICE_SELECT_PROMPT = PromptTemplate(
