@@ -1,5 +1,4 @@
 import asyncio
-from pynput import keyboard
 
 
 class InputHandler:
@@ -15,6 +14,14 @@ class InputHandler:
         loop (asyncio.AbstractEventLoop): The event loop for the input handler.
     """
     def __init__(self):
+        try:
+            from pynput import keyboard  # type: ignore
+        except ImportError as e:
+            raise ImportError(
+                "pynput is required for InputHandler. Install with the 'dev' extra."
+            ) from e
+
+        self.keyboard = keyboard
         self.text_input = ""
         self.text_ready = asyncio.Event()
         self.command_queue = asyncio.Queue()
@@ -22,22 +29,22 @@ class InputHandler:
 
     def on_press(self, key):
         try:
-            if key == keyboard.Key.space:
+            if key == self.keyboard.Key.space:
                 self.loop.call_soon_threadsafe(
                     self.command_queue.put_nowait, ('space', None)
                 )
-            elif key == keyboard.Key.enter:
+            elif key == self.keyboard.Key.enter:
                 self.loop.call_soon_threadsafe(
                     self.command_queue.put_nowait, ('enter', self.text_input)
                 )
                 self.text_input = ""
-            elif key == keyboard.Key.backspace:
+            elif key == self.keyboard.Key.backspace:
                 self.text_input = self.text_input[:-1]
-            elif key == keyboard.KeyCode.from_char('r'):
+            elif key == self.keyboard.KeyCode.from_char('r'):
                 self.loop.call_soon_threadsafe(
                     self.command_queue.put_nowait, ('r', None)
                 )
-            elif key == keyboard.KeyCode.from_char('q'):
+            elif key == self.keyboard.KeyCode.from_char('q'):
                 self.loop.call_soon_threadsafe(
                     self.command_queue.put_nowait, ('q', None)
                 )

@@ -2,7 +2,6 @@ import os
 import asyncio
 from dotenv import load_dotenv
 from pydantic import BaseModel
-from pynput import keyboard
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import JSONResponse
 from starlette.staticfiles import StaticFiles
@@ -60,6 +59,13 @@ async def handle_media_stream(websocket: WebSocket):
     ws_handler = WsHandler(websocket)
     input_handler = InputHandler()
     input_handler.loop = asyncio.get_running_loop()
+
+    try:
+        from pynput import keyboard  # type: ignore
+    except ImportError as e:
+        raise ImportError(
+            "pynput is required for this example. Install with the 'dev' extra."
+        ) from e
 
     client = RealtimeClient(
         api_key=os.getenv("OPENAI_API_KEY"),
