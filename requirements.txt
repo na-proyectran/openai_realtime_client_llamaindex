@@ -1,0 +1,21 @@
+llama-index-core==0.12.52.post1
+pyaudio==0.2.14
+audioop-lts==0.2.1; python_version >= "3.13"
+pynput==1.8.1
+pydub==0.25.1
+websockets==15.0.1
+wave==0.0.2
+python-dotenv==1.1.1
+tzdata>=2025.2
+fastapi==0.116.0
+uvicorn==0.35.0
+openai==1.98.0
+llama-index-vector-stores-qdrant==0.6.1
+llama-index-llms-openai==0.4.7
+llama-index-embeddings-openai==0.3.1
+llama-index-agent-openai==0.4.12
+fastembed-gpu==0.7.1
+transformers[torch]==4.54.1
+arize-phoenix==11.17.0
+openinference-instrumentation-llama_index==4.3.3
+llama-index-callbacks-openinference==0.4.0
