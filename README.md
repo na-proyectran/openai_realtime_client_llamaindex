@@ -78,6 +78,20 @@ docker run --env-file .env -p 8000:8000 openai-realtime-demo
 
 This starts the FastAPI demo and exposes it on port `8000`.
 
+### Docker Compose
+
+The repository also includes a `docker-compose.yml` that spins up the app along
+with Phoenix monitoring and a Postgres database. To build the image and start
+everything:
+
+```bash
+docker compose up --build
+```
+
+The app will be available at `http://localhost:8000` and Phoenix at
+`http://localhost:6006`. The compose file mounts `rag_docs/` so you can edit
+documents on the host.
+
 
 **NOTE:** Streaming mode can be a little janky, best to use headphones in a quiet environment.
 
