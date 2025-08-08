@@ -92,6 +92,10 @@ The app will be available at `http://localhost:8000` and Phoenix at
 `http://localhost:6006`. The compose file mounts `rag_docs/` so you can edit
 documents on the host.
 
+The app now exposes Prometheus metrics at `http://localhost:8000/metrics`.
+Prometheus is available at `http://localhost:9090` and scrapes metrics from
+both the app and Phoenix (port `6006`).
+
 
 **NOTE:** Streaming mode can be a little janky, best to use headphones in a quiet environment.
 
