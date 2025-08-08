@@ -2,8 +2,12 @@ import asyncio
 import os
 from dotenv import load_dotenv
 
-from pynput import keyboard
-from openai_realtime_client import RealtimeClient, AudioHandler, InputHandler, TurnDetectionMode
+from openai_realtime_client import (
+    RealtimeClient,
+    AudioHandler,
+    InputHandler,
+    TurnDetectionMode,
+)
 from llama_index.core.tools import FunctionTool
 from tools import get_current_time
 
@@ -15,6 +19,13 @@ load_dotenv()
 tools = [FunctionTool.from_defaults(fn=get_current_time)]
 
 async def main():
+    try:
+        from pynput import keyboard  # type: ignore
+    except ImportError as e:
+        raise ImportError(
+            "pynput is required for this example. Install with the 'dev' extra."
+        ) from e
+
     audio_handler = AudioHandler()
     input_handler = InputHandler()
     input_handler.loop = asyncio.get_running_loop()

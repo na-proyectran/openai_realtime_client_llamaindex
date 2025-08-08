@@ -11,7 +11,7 @@ python = ">=3.13,<3.14"
 llama-index-core = "0.12.52.post1"
 pyaudio = "0.2.14"
 audioop-lts = { version = "0.2.1", python = ">=3.13" }
-pynput = "1.8.1"
+pynput = { version = "1.8.1", optional = true }
 pydub = "0.25.1"
 websockets = "15.0.1"
 wave = "0.0.2"
@@ -29,6 +29,9 @@ transformers = { version = "4.54.1", extras = ["torch"] }
 arize-phoenix="11.17.0"
 openinference-instrumentation-llama_index="4.3.3"
 llama-index-callbacks-openinference="0.3.0"
+
+[tool.poetry.extras]
+dev = ["pynput"]
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

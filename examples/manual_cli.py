@@ -2,7 +2,6 @@ import asyncio
 import os
 from dotenv import load_dotenv
 
-from pynput import keyboard
 from openai_realtime_client import RealtimeClient, InputHandler, AudioHandler
 from llama_index.core.tools import FunctionTool
 from tools import get_current_time
@@ -13,6 +12,12 @@ tools = [FunctionTool.from_defaults(fn=get_current_time)]
 
 async def main():
     load_dotenv()
+    try:
+        from pynput import keyboard  # type: ignore
+    except ImportError as e:
+        raise ImportError(
+            "pynput is required for this example. Install with the 'dev' extra."
+        ) from e
     # Initialize handlers
     audio_handler = AudioHandler()
     input_handler = InputHandler()
@@ -81,7 +86,8 @@ async def main():
 
 if __name__ == "__main__":
     # Install required packages:
-    # pip install pyaudio pynput pydub websockets
+    # pip install pyaudio pydub websockets
+    # Optional: pip install pynput
 
     print("Starting Realtime API CLI...")
     asyncio.run(main())
