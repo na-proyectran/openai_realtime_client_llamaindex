@@ -13,6 +13,10 @@ pip install fastapi uvicorn websockets python-dotenv
 python examples/unity_ws_server.py
 ```
 
+   You can also run the server inside Docker using the instructions in the
+   project root README or start it alongside the monitoring stack with
+   `docker compose up`.
+
 The server exposes a WebSocket endpoint at `ws://localhost:8000/ws` that accepts raw PCM16 audio
 and returns base64 encoded audio chunks from the assistant.
 
