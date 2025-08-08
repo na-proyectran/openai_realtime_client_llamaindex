@@ -23,5 +23,8 @@ COPY . .
 RUN poetry config virtualenvs.create false \
  && poetry install --no-interaction --no-ansi --only main
 
+# ───────────── EXPONER PUERTO ─────────────
+EXPOSE 8000
+
 # ───────────── COMANDO POR DEFECTO ─────────────
 CMD ["python", "examples/unity_ws_server.py"]

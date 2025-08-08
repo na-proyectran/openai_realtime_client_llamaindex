@@ -80,12 +80,17 @@ This starts the FastAPI demo and exposes it on port `8000`.
 
 ### Docker Compose
 
-A `docker-compose.yml` file is provided to run the demo alongside
-[Phoenix](https://github.com/Arize-ai/phoenix) and Prometheus for metrics collection:
+The repository also includes a `docker-compose.yml` that spins up the app along
+with Phoenix monitoring and a Postgres database. To build the image and start
+everything:
 
 ```bash
-docker compose up
+docker compose up --build
 ```
+
+The app will be available at `http://localhost:8000` and Phoenix at
+`http://localhost:6006`. The compose file mounts `rag_docs/` so you can edit
+documents on the host.
 
 The app now exposes Prometheus metrics at `http://localhost:8000/metrics`.
 Prometheus is available at `http://localhost:9090` and scrapes metrics from
