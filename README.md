@@ -78,6 +78,19 @@ docker run --env-file .env -p 8000:8000 openai-realtime-demo
 
 This starts the FastAPI demo and exposes it on port `8000`.
 
+### Docker Compose
+
+A `docker-compose.yml` file is provided to run the demo alongside
+[Phoenix](https://github.com/Arize-ai/phoenix) and Prometheus for metrics collection:
+
+```bash
+docker compose up
+```
+
+The app now exposes Prometheus metrics at `http://localhost:8000/metrics`.
+Prometheus is available at `http://localhost:9090` and scrapes metrics from
+both the app and Phoenix (port `6006`).
+
 
 **NOTE:** Streaming mode can be a little janky, best to use headphones in a quiet environment.
 
