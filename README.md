@@ -36,6 +36,17 @@ Place any text files you want indexed under `rag_docs/` in the project root.
 You can also specify another directory by setting the `RAG_DOCS_DIR`
 environment variable before running the examples.
 
+Hybrid search in Qdrant can be toggled with the `RAG_ENABLE_HYBRID` environment
+variable. Set it to `true` to enable dense + sparse retrieval and install the
+optional FastEmbed dependency:
+
+```bash
+poetry install -E fastembed-gpu
+```
+
+Set `RAG_ENABLE_HYBRID` to `false` to skip installing the extra dependency and
+perform pure semantic search. Valid values are `true` and `false`.
+
 ## Usage
 
 Assuming you installed and cloned the repo (or copy-pasted the examples), you can immediately run the examples.

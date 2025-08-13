@@ -24,7 +24,7 @@ llama-index-vector-stores-qdrant = "0.6.1"
 llama-index-llms-openai = "0.4.7"
 llama-index-embeddings-openai = "0.3.1"
 llama-index-agent-openai="0.4.12"
-fastembed-gpu = "0.7.1"
+fastembed-gpu = { version = "0.7.1", optional = true }
 transformers = { version = "4.54.1", extras = ["torch"] }
 arize-phoenix="11.17.0"
 openinference-instrumentation-llama_index="4.3.3"
@@ -32,6 +32,7 @@ llama-index-callbacks-openinference="0.3.0"
 
 [tool.poetry.extras]
 dev = ["pynput"]
+fastembed-gpu = ["fastembed-gpu"]
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

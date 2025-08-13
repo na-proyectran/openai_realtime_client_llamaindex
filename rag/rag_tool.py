@@ -20,6 +20,10 @@ load_dotenv()
 
 # Default RAG model
 RAG_MODEL = os.getenv("RAG_MODEL")
+# Toggle hybrid search to enable sparse + dense retrieval. When disabled, the
+# index falls back to semantic search only.
+# Enable Qdrant hybrid search when set to "true". Any other value disables it.
+RAG_ENABLE_HYBRID = os.getenv("RAG_ENABLE_HYBRID", "false").lower() == "true"
 
 # Prompt for document selection
 CHOICE_SELECT_PROMPT = PromptTemplate(
@@ -67,15 +71,28 @@ def _build_query_engine(top_k: int, top_n: int):
         response_mode=ResponseMode.CONTEXT_ONLY
     )
 
-    # retrieve top_k sparse, top_k dense, and filter down to (top_k + top_k) / 2 total hybrid results
-    return index.as_query_engine(llm=_llm,
-                                 node_postprocessors=postprocessors,
-                                 response_synthesizer=response_synthesizer,
-                                 vector_store_query_mode=VectorStoreQueryMode.HYBRID,
-                                 similarity_top_k=int(top_k * 0.7),
-                                 sparse_top_k=int(top_k * 0.3),
-                                 hybrid_top_k=top_k,
-                                 use_async=False) # TODO: no es posible con qdrant en memoria!
+    if RAG_ENABLE_HYBRID:
+        # retrieve top_k sparse, top_k dense, and filter down to
+        # (top_k + top_k) / 2 total hybrid results
+        return index.as_query_engine(
+            llm=_llm,
+            node_postprocessors=postprocessors,
+            response_synthesizer=response_synthesizer,
+            vector_store_query_mode=VectorStoreQueryMode.HYBRID,
+            similarity_top_k=int(top_k * 0.7),
+            sparse_top_k=int(top_k * 0.3),
+            hybrid_top_k=top_k,
+            use_async=False,
+        )  # TODO: no es posible con qdrant en memoria!
+    else:
+        return index.as_query_engine(
+            llm=_llm,
+            node_postprocessors=postprocessors,
+            response_synthesizer=response_synthesizer,
+            vector_store_query_mode=VectorStoreQueryMode.DEFAULT,
+            similarity_top_k=top_k,
+            use_async=False,
+        )
 
 
 def query_rag(query: str, top_k: int = 10, top_n: int = 3) -> Any:
