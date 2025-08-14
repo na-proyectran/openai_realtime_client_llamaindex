@@ -19,7 +19,7 @@ class WsHandler:
             return
 
         self.streaming = True
-        print("\nStreaming audio... Press 'q' to stop.")
+        print("\nStreaming audio...")
 
         while self.streaming:
             try:

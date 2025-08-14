@@ -13,7 +13,12 @@ from llama_index.core import Settings
 from llama_index.embeddings.openai import OpenAIEmbedding
 from llama_index.vector_stores.qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient, AsyncQdrantClient
-from qdrant_client.models import Distance, VectorParams, SparseVectorParams, SparseIndexParams
+from qdrant_client.models import (
+    Distance,
+    VectorParams,
+    SparseVectorParams,
+    SparseIndexParams,
+)
 from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
 from phoenix.otel import register
 
@@ -28,6 +33,10 @@ RAG_COLLECTION = os.getenv("RAG_COLLECTION")
 OPENAI_EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL")
 OPENAI_EMBEDDING_SIZE = int(os.getenv("OPENAI_EMBEDDING_SIZE"))
 FASTEMBED_SPARSE_MODEL = os.getenv("FASTEMBED_SPARSE_MODEL")
+# Toggle hybrid search (dense + sparse) in Qdrant. When disabled the sparse
+# fastembed model is not loaded and only dense semantic search is performed.
+# Enable Qdrant hybrid search when set to "true". Any other value disables it.
+RAG_ENABLE_HYBRID = os.getenv("RAG_ENABLE_HYBRID", "false").lower() == "true"
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RAG_DOCS_DIR = os.path.join(BASE_DIR, os.getenv("RAG_DOCS_DIR"))
 
@@ -45,7 +54,7 @@ def get_index() -> VectorStoreIndex:
                                  required_exts=[".txt"],
                                  filename_as_id=True).load_data()
 
-    splitter = ParagraphSplitter(separator=r'\n{2,}')
+    splitter = ParagraphSplitter(separator=r'\n{1,}')
     nodes = splitter.get_nodes_from_documents(docs)
     print("Nodes: ", len(nodes))
 
@@ -55,26 +64,34 @@ def get_index() -> VectorStoreIndex:
     #aclient = AsyncQdrantClient(path=":memory:")
 
     if not client.collection_exists(RAG_COLLECTION):
-        client.create_collection(
-            collection_name=RAG_COLLECTION,
-            vectors_config={
+        create_collection_kwargs = {
+            "collection_name": RAG_COLLECTION,
+            "vectors_config": {
                 "text-dense": VectorParams(
                     size=OPENAI_EMBEDDING_SIZE,
                     distance=Distance.COSINE,
                 )
             },
-            sparse_vectors_config={
-                "text-sparse": SparseVectorParams(
-                    index=SparseIndexParams()
-                )
-            },
-        )
+        }
+        if RAG_ENABLE_HYBRID:
+            create_collection_kwargs["sparse_vectors_config"] = {
+                "text-sparse": SparseVectorParams(index=SparseIndexParams())
+            }
+        client.create_collection(**create_collection_kwargs)
 
-    vector_store = QdrantVectorStore(client=client,
-                                     #aclient=aclient, no es posible con qdrant en memoria!
-                                     collection_name=RAG_COLLECTION,
-                                     enable_hybrid=True,
-                                     fastembed_sparse_model=FASTEMBED_SPARSE_MODEL)
+    vector_store_kwargs = {
+        "client": client,
+        #"aclient": aclient, # no es posible con qdrant en memoria!
+        "collection_name": RAG_COLLECTION,
+    }
+    if RAG_ENABLE_HYBRID:
+        vector_store_kwargs.update(
+            {
+                "enable_hybrid": True,
+                "fastembed_sparse_model": FASTEMBED_SPARSE_MODEL,
+            }
+        )
+    vector_store = QdrantVectorStore(**vector_store_kwargs)
     storage = StorageContext.from_defaults(vector_store=vector_store)
     embed_model = OpenAIEmbedding(model=OPENAI_EMBEDDING_MODEL,
                                   dimensions=OPENAI_EMBEDDING_SIZE)

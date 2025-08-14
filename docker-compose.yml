@@ -1,13 +1,17 @@
 services:
   phoenix:
-    image: arizephoenix/phoenix:latest
+    image: arizephoenix/phoenix:11.22
     depends_on:
       - db
     ports:
-      - "6006:6006"
-      - "4317:4317"
+      - "6006:6006"   # UI de Phoenix
+      - "4317:4317"   # OTLP gRPC
+      # - "4318:4318" # OTLP HTTP (HTTP/protobuf)
+      # - "9090:9090" # [Optional] PROMETHEUS PORT IF ENABLED
     environment:
       PHOENIX_SQL_DATABASE_URL: postgresql://postgres:postgres@db:5432/postgres
+      PHOENIX_DEFAULT_RETENTION_POLICY_DAYS: 30
+      PHOENIX_ENABLE_PROMETHEUS: false
 
   db:
     image: postgres:16

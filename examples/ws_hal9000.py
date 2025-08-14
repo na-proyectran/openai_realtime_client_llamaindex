@@ -5,7 +5,9 @@ from pydantic import BaseModel
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import JSONResponse
 from starlette.staticfiles import StaticFiles
-from openai_realtime_client import RealtimeClient, TurnDetectionMode, WsHandler, InputHandler
+from starlette.websockets import WebSocketDisconnect
+
+from openai_realtime_client import RealtimeClient, TurnDetectionMode, WsHandler
 from llama_index.core.tools import FunctionTool, ToolMetadata
 from tools import get_current_time, get_current_date, query_rag
 
@@ -57,60 +59,55 @@ async def health_check():
 async def handle_media_stream(websocket: WebSocket):
     await websocket.accept()
     ws_handler = WsHandler(websocket)
-    input_handler = InputHandler()
-    input_handler.loop = asyncio.get_running_loop()
-
-    try:
-        from pynput import keyboard  # type: ignore
-    except ImportError as e:
-        raise ImportError(
-            "pynput is required for this example. Install with the 'dev' extra."
-        ) from e
 
     client = RealtimeClient(
         api_key=os.getenv("OPENAI_API_KEY"),
         model=os.getenv("OPENAI_MODEL"),
         on_text_delta=lambda text: print(f"\nAssistant: {text}", end="", flush=True),
         on_audio_delta=lambda audio: asyncio.create_task(ws_handler.send_audio(audio)),
-        on_input_transcript=lambda transcript: print(f"\nYou said: {transcript}\nAssistant: ", end="", flush=True),
-        on_output_transcript=lambda transcript: print(f"{transcript}", end="", flush=True),
+        on_input_transcript=lambda t: print(f"\nYou said: {t}\nAssistant: ", end="", flush=True),
+        on_output_transcript=lambda t: print(f"{t}", end="", flush=True),
         on_interrupt=lambda: asyncio.create_task(ws_handler.send_clear_event()),
         turn_detection_mode=TurnDetectionMode.SEMANTIC_VAD,
         language="es",
         tools=tools,
     )
 
-    # Start keyboard listener in a separate thread
-    listener = keyboard.Listener(on_press=input_handler.on_press)
-    listener.start()
-
+    tasks = []
     try:
         await client.connect()
-        asyncio.create_task(client.handle_messages())
+        print("Connected to OpenAI Realtime API!\n")
 
-        print("Connected to OpenAI Realtime API!")
-        print("Audio streaming will start automatically.")
-        print("Press 'q' to quit")
-        print("")
+        # Lanza tareas concurrentes
+        tasks.append(asyncio.create_task(client.handle_messages()))
+        tasks.append(asyncio.create_task(ws_handler.start_streaming(client)))
 
-        # Start continuous audio streaming
-        asyncio.create_task(ws_handler.start_streaming(client))
+        # Mantiene vivo el endpoint hasta que alguna falle o el cliente cierre
+        done, pending = await asyncio.wait(
+            tasks, return_when=asyncio.FIRST_EXCEPTION
+        )
 
-        # Simple input loop for quit command
-        while True:
-            command, _ = await input_handler.command_queue.get()
+        # Propaga la primera excepción (si la hubo)
+        for d in done:
+            exc = d.exception()
+            if exc:
+                raise exc
 
-            if command == 'q':
-                break
-
+    except WebSocketDisconnect:
+        print("WebSocket client disconnected")
     except Exception as e:
         print(f"Error: {e}")
     finally:
+        for t in tasks:
+            t.cancel()
         await ws_handler.stop_streaming()
         await client.close()
 
 # Serve static files
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent
+static_dir = BASE_DIR / "static"
+app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
 
 if __name__ == "__main__":
     print("Starting Realtime Assistant server...")
