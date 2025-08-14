@@ -27,4 +27,4 @@ RUN poetry config virtualenvs.create false \
 EXPOSE 8000
 
 # ───────────── COMANDO POR DEFECTO ─────────────
-CMD ["python", "examples/unity_ws_server.py"]
+CMD ["python", "examples/ws_hal9000.py"]

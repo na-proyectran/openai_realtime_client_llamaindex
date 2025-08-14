@@ -54,7 +54,7 @@ def get_index() -> VectorStoreIndex:
                                  required_exts=[".txt"],
                                  filename_as_id=True).load_data()
 
-    splitter = ParagraphSplitter(separator=r'\n{2,}')
+    splitter = ParagraphSplitter(separator=r'\n{1,}')
     nodes = splitter.get_nodes_from_documents(docs)
     print("Nodes: ", len(nodes))
 
