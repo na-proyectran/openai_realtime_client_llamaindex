@@ -27,9 +27,9 @@ async def health_check():
     return {"message": "Unity Realtime WebRTC server running"}
 
 
-@app.post("/offer")
+@app.post("/webrtc")
 async def unity_webrtc_endpoint(offer: Offer):
-    """Handle WebRTC offer from Unity and stream audio with the Realtime API."""
+    """Handle WebRTC offer from a client and stream audio with the Realtime API."""
     rtc_handler = RtcHandler()
 
     transport = ConnectionMode.WEBRTC if os.getenv("OPENAI_TRANSPORT", "webrtc").lower() == "webrtc" else ConnectionMode.WEBSOCKET

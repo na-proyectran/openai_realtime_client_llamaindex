@@ -214,6 +214,7 @@ class RealtimeClient:
             headers = {
                 "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/sdp",
+                "OpenAI-Beta": "realtime=v1",
             }
             async with aiohttp.ClientSession() as session:
                 async with session.post(http_url, data=offer.sdp, headers=headers) as r:
