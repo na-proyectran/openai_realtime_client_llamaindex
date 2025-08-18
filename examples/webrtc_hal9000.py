@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from starlette.staticfiles import StaticFiles
-
+from prometheus_fastapi_instrumentator import Instrumentator
 from openai_realtime_client import RealtimeClient, TurnDetectionMode, RtcHandler
 from llama_index.core.tools import FunctionTool, ToolMetadata
 from tools import get_current_time, get_current_date, query_rag
@@ -47,6 +47,8 @@ tools = [
 
 app = FastAPI()
 
+Instrumentator().instrument(app).expose(app, endpoint="/metrics")
+
 @app.get("/health", response_class=JSONResponse)
 async def health_check():
     return {"message": "Realtime WebRTC Assistant server is running!"}
@@ -54,7 +56,7 @@ async def health_check():
 class Offer(BaseModel):
     sdp: str
 
-@app.post("/offer")
+@app.post("/rtc")
 async def handle_media_stream(offer: Offer):
     rtc_handler = RtcHandler()
 

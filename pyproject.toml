@@ -30,7 +30,7 @@ transformers = { version = "4.54.1", extras = ["torch"], optional = true }
 arize-phoenix="11.17.0"
 openinference-instrumentation-llama_index="4.3.3"
 llama-index-callbacks-openinference="0.3.0"
-
+prometheus-fastapi-instrumentator="7.1.0"
 [tool.poetry.extras]
 dev = ["pynput"]
 fastembed-gpu = ["fastembed-gpu"]

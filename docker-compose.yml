@@ -35,7 +35,7 @@ services:
       - ./rag_docs:/app/rag_docs
       
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.5.0
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
     ports:
