@@ -6,7 +6,12 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from starlette.staticfiles import StaticFiles
 from prometheus_fastapi_instrumentator import Instrumentator
-from openai_realtime_client import RealtimeClient, TurnDetectionMode, RtcHandler
+from openai_realtime_client import (
+    RealtimeClient,
+    TurnDetectionMode,
+    RtcHandler,
+    ConnectionMode,
+)
 from llama_index.core.tools import FunctionTool, ToolMetadata
 from tools import get_current_time, get_current_date, query_rag
 
@@ -60,6 +65,8 @@ class Offer(BaseModel):
 async def handle_media_stream(offer: Offer):
     rtc_handler = RtcHandler()
 
+    transport = ConnectionMode.WEBRTC if os.getenv("OPENAI_TRANSPORT", "webrtc").lower() == "webrtc" else ConnectionMode.WEBSOCKET
+
     client = RealtimeClient(
         api_key=os.getenv("OPENAI_API_KEY"),
         model=os.getenv("OPENAI_MODEL"),
@@ -71,6 +78,7 @@ async def handle_media_stream(offer: Offer):
         turn_detection_mode=TurnDetectionMode.SEMANTIC_VAD,
         language="es",
         tools=tools,
+        connection_mode=transport,
     )
 
     await client.connect()
