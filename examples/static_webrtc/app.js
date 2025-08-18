@@ -30,9 +30,6 @@ muteBtn.addEventListener('click', () => {
 });
 
 async function startSession() {
-    const resp = await fetch('/webrtc', {method: 'POST'});
-    const data = await resp.json();
-    const token = data?.client_secret?.value;
 
     pc = new RTCPeerConnection();
 
@@ -54,17 +51,13 @@ async function startSession() {
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
 
-    const baseUrl = `https://api.openai.com/v1/realtime?model=${encodeURIComponent(data.model || '')}`;
-    const ansResp = await fetch(baseUrl, {
+const resp = await fetch('/webrtc', {
         method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/sdp'
-        },
-        body: offer.sdp
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sdp: offer.sdp })
     });
-    const answer = await ansResp.text();
-    await pc.setRemoteDescription({type: 'answer', sdp: answer});
+    const { sdp: answerSdp } = await resp.json();
+    await pc.setRemoteDescription({ type: 'answer', sdp: answerSdp });
 
     hal.classList.remove('idle');
     hal.classList.add('speaking');
