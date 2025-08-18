@@ -11,7 +11,7 @@ services:
     environment:
       PHOENIX_SQL_DATABASE_URL: postgresql://postgres:postgres@db:5432/postgres
       PHOENIX_DEFAULT_RETENTION_POLICY_DAYS: 30
-      PHOENIX_ENABLE_PROMETHEUS: false
+      PHOENIX_ENABLE_PROMETHEUS: true
 
   db:
     image: postgres:16

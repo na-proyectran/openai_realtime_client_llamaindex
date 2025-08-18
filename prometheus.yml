@@ -4,6 +4,8 @@ scrape_configs:
   - job_name: 'app'
     static_configs:
       - targets: ['app:8000']
+
   - job_name: 'phoenix'
+    metrics_path: /metrics
     static_configs:
-      - targets: ['phoenix:6006']
+      - targets: ['phoenix:9090']

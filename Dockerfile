@@ -39,4 +39,4 @@ RUN poetry config virtualenvs.create false \
 EXPOSE 8000
 
 # ───────────── COMANDO POR DEFECTO ─────────────
-CMD ["python", "examples/webrtc_hal9000.py"]
+CMD ["python", "examples/hal9000_webrtc.py"]

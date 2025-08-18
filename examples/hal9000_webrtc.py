@@ -56,7 +56,7 @@ async def health_check():
 class Offer(BaseModel):
     sdp: str
 
-@app.post("/rtc")
+@app.post("/webrtc")
 async def handle_media_stream(offer: Offer):
     rtc_handler = RtcHandler()
 
@@ -81,7 +81,7 @@ async def handle_media_stream(offer: Offer):
 
 from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
-static_dir = BASE_DIR / "static"
+static_dir = BASE_DIR / "static_webrtc"
 app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
 
 if __name__ == "__main__":
