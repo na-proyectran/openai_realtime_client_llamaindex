@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from openai_realtime_client import RealtimeClient, TurnDetectionMode, RtcHandler
+from openai_realtime_client import RealtimeClient, TurnDetectionMode, RtcHandler, ConnectionMode
 
 load_dotenv()
 
@@ -35,6 +35,7 @@ async def unity_webrtc_endpoint(offer: Offer):
         on_interrupt=lambda: asyncio.create_task(rtc_handler.send_clear_event()),
         language="es",
         turn_detection_mode=TurnDetectionMode.SEMANTIC_VAD,
+        connection_mode=ConnectionMode.WEBRTC,
     )
 
     await client.connect()
