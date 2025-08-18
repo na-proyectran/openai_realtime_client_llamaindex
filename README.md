@@ -67,7 +67,7 @@ To proxy the Realtime API behind a simple FastAPI server:
 
 ```bash
 pip install fastapi==0.116.0 uvicorn==0.35.0 websockets==15.0.1
-python ./examples/ws_hal9000.py
+python ./examples/hal9000_ws.py
 ```
 
 ## Docker
