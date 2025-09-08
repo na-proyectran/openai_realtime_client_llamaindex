@@ -8,12 +8,11 @@ class RealtimeDemo {
         this.processor = null;
         this.stream = null;
         this.sessionId = this.generateSessionId();
-        
-        // Audio playback queue
-        this.audioQueue = [];
-        this.isPlayingAudio = false;
+
+        // Audio playback state
         this.playbackAudioContext = null;
-        this.currentAudioSource = null;
+        this.nextPlaybackTime = 0;
+        this.activeSources = [];
         
         this.initializeElements();
         this.setupEventListeners();
@@ -125,43 +124,46 @@ class RealtimeDemo {
         }
         
         try {
-            this.stream = await navigator.mediaDevices.getUserMedia({ 
-                audio: {
-                    sampleRate: 24000,
-                    channelCount: 1,
-                    echoCancellation: true,
-                    noiseSuppression: true
-                } 
-            });
-            
+            this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             this.audioContext = new AudioContext({ sampleRate: 24000 });
             const source = this.audioContext.createMediaStreamSource(this.stream);
-            
-            // Create a script processor to capture audio data
-            this.processor = this.audioContext.createScriptProcessor(4096, 1, 1);
+
+            if (this.audioContext.audioWorklet) {
+                await this.audioContext.audioWorklet.addModule('worklet.js');
+                this.processor = new AudioWorkletNode(this.audioContext, 'capture-processor');
+                this.processor.port.onmessage = (e) => {
+                    if (!this.isMuted && this.ws && this.ws.readyState === WebSocket.OPEN) {
+                        const pcm16 = e.data;
+                        this.ws.send(JSON.stringify({
+                            type: 'audio',
+                            data: Array.from(pcm16)
+                        }));
+                    }
+                };
+            } else {
+                // Fallback for browsers without AudioWorklet support
+                this.processor = this.audioContext.createScriptProcessor(1024, 1, 1);
+                this.processor.onaudioprocess = (event) => {
+                    if (!this.isMuted && this.ws && this.ws.readyState === WebSocket.OPEN) {
+                        const input = event.inputBuffer.getChannelData(0);
+                        const pcm16 = new Int16Array(input.length);
+                        for (let i = 0; i < input.length; i++) {
+                            let s = Math.max(-1, Math.min(1, input[i]));
+                            pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+                        }
+                        this.ws.send(JSON.stringify({
+                            type: 'audio',
+                            data: Array.from(pcm16)
+                        }));
+                    }
+                };
+            }
+
             source.connect(this.processor);
             this.processor.connect(this.audioContext.destination);
-            
-            this.processor.onaudioprocess = (event) => {
-                if (!this.isMuted && this.ws && this.ws.readyState === WebSocket.OPEN) {
-                    const inputBuffer = event.inputBuffer.getChannelData(0);
-                    const int16Buffer = new Int16Array(inputBuffer.length);
-                    
-                    // Convert float32 to int16
-                    for (let i = 0; i < inputBuffer.length; i++) {
-                        int16Buffer[i] = Math.max(-32768, Math.min(32767, inputBuffer[i] * 32768));
-                    }
-                    
-                    this.ws.send(JSON.stringify({
-                        type: 'audio',
-                        data: Array.from(int16Buffer)
-                    }));
-                }
-            };
-            
+
             this.isCapturing = true;
             this.updateMuteUI();
-            
         } catch (error) {
             console.error('Failed to start audio capture:', error);
         }
@@ -352,108 +354,65 @@ class RealtimeDemo {
                 console.warn('Received empty audio data, skipping playback');
                 return;
             }
-            
-            // Add to queue
-            this.audioQueue.push(audioBase64);
-            
-            // Start processing queue if not already playing
-            if (!this.isPlayingAudio) {
-                this.processAudioQueue();
+
+            if (!this.playbackAudioContext) {
+                this.playbackAudioContext = new AudioContext({ sampleRate: 24000 });
+                this.nextPlaybackTime = this.playbackAudioContext.currentTime;
             }
-            
+
+            // Decode base64 to bytes
+            const binaryString = atob(audioBase64);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+
+            const int16Array = new Int16Array(bytes.buffer);
+            if (int16Array.length === 0) {
+                console.warn('Audio chunk has no samples, skipping');
+                return;
+            }
+
+            const float32Array = new Float32Array(int16Array.length);
+            for (let i = 0; i < int16Array.length; i++) {
+                float32Array[i] = int16Array[i] / 32768.0;
+            }
+
+            const audioBuffer = this.playbackAudioContext.createBuffer(1, float32Array.length, 24000);
+            audioBuffer.getChannelData(0).set(float32Array);
+
+            const source = this.playbackAudioContext.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(this.playbackAudioContext.destination);
+
+            if (this.nextPlaybackTime < this.playbackAudioContext.currentTime) {
+                this.nextPlaybackTime = this.playbackAudioContext.currentTime;
+            }
+
+            source.start(this.nextPlaybackTime);
+            this.activeSources.push(source);
+            source.onended = () => {
+                this.activeSources = this.activeSources.filter(s => s !== source);
+            };
+            this.nextPlaybackTime += audioBuffer.duration;
+
         } catch (error) {
             console.error('Failed to play audio:', error);
         }
     }
-    
-    async processAudioQueue() {
-        if (this.isPlayingAudio || this.audioQueue.length === 0) {
-            return;
-        }
-        
-        this.isPlayingAudio = true;
-        
-        // Initialize audio context if needed
-        if (!this.playbackAudioContext) {
-            this.playbackAudioContext = new AudioContext({ sampleRate: 24000 });
-        }
-        
-        while (this.audioQueue.length > 0) {
-            const audioBase64 = this.audioQueue.shift();
-            await this.playAudioChunk(audioBase64);
-        }
-        
-        this.isPlayingAudio = false;
-    }
-    
-    async playAudioChunk(audioBase64) {
-        return new Promise((resolve, reject) => {
-            try {
-                // Decode base64 to ArrayBuffer
-                const binaryString = atob(audioBase64);
-                const bytes = new Uint8Array(binaryString.length);
-                for (let i = 0; i < binaryString.length; i++) {
-                    bytes[i] = binaryString.charCodeAt(i);
-                }
-                
-                const int16Array = new Int16Array(bytes.buffer);
-                
-                if (int16Array.length === 0) {
-                    console.warn('Audio chunk has no samples, skipping');
-                    resolve();
-                    return;
-                }
-                
-                const float32Array = new Float32Array(int16Array.length);
-                
-                // Convert int16 to float32
-                for (let i = 0; i < int16Array.length; i++) {
-                    float32Array[i] = int16Array[i] / 32768.0;
-                }
-                
-                const audioBuffer = this.playbackAudioContext.createBuffer(1, float32Array.length, 24000);
-                audioBuffer.getChannelData(0).set(float32Array);
-                
-                const source = this.playbackAudioContext.createBufferSource();
-                source.buffer = audioBuffer;
-                source.connect(this.playbackAudioContext.destination);
-                
-                // Store reference to current source
-                this.currentAudioSource = source;
-                
-                source.onended = () => {
-                    this.currentAudioSource = null;
-                    resolve();
-                };
-                source.start();
-                
-            } catch (error) {
-                console.error('Failed to play audio chunk:', error);
-                reject(error);
-            }
-        });
-    }
-    
+
     stopAudioPlayback() {
-        console.log('Stopping audio playback due to interruption');
-        
-        // Stop current audio source if playing
-        if (this.currentAudioSource) {
-            try {
-                this.currentAudioSource.stop();
-                this.currentAudioSource = null;
-            } catch (error) {
-                console.error('Error stopping audio source:', error);
-            }
+        if (this.activeSources.length > 0) {
+            this.activeSources.forEach(src => {
+                try { src.stop(); } catch (e) {}
+            });
+            this.activeSources = [];
         }
-        
-        // Clear the audio queue
-        this.audioQueue = [];
-        
-        // Reset playback state
-        this.isPlayingAudio = false;
-        
-        console.log('Audio playback stopped and queue cleared');
+        if (this.playbackAudioContext) {
+            this.nextPlaybackTime = this.playbackAudioContext.currentTime;
+        } else {
+            this.nextPlaybackTime = 0;
+        }
     }
     
     scrollToBottom() {
